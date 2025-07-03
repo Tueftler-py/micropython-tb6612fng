@@ -1,6 +1,6 @@
 # TB6612FNG Motor Driver Library for MicroPython
 
-A simple and efficient MicroPython library to control (a) DC motor(s) using the TB6612FNG motor driver chip on RP2040-based boards (e.g. Raspberry Pi Pico), may work on other MicroPython boards as well.
+A simple and efficient MicroPython library to control DC motor(s) using the TB6612FNG motor driver chip with RP2040-based boards (e.g. Raspberry Pi Pico), may work on other MicroPython boards as well.
 
 ---
 
