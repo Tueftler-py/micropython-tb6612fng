@@ -31,7 +31,7 @@ class TB6612FNG:
     Designed for MicroPython on RP2040 (Raspberry Pi Pico) but portable to other platforms.
     """
     
-    def __init__(self, pin_1, pin_2, pwm_pin, stby_pin=None, reverse_pins=False, pwm_freq=20_000):
+    def __init__(self, pin_1, pin_2, pwm_pin, stby_pin=None, pwm_freq=20_000):
         """
         Initialize motor control pins and PWM.
 
@@ -41,13 +41,11 @@ class TB6612FNG:
             pwm_pin (int): GPIO pin number for PWM speed control.
             stby_pin (int or None): GPIO pin number for standby (enable/disable) control.
                                    Set to None if handled externally or multiple drivers share the pin.
-            reverse_pins (bool): If True, swap the IN1 and IN2 signals to invert motor direction.
             pwm_freq (int): PWM frequency in Hz, default is 20kHz (high enough to be inaudible).
         """
         self.p1 = machine.Pin(pin_1, machine.Pin.OUT)
         self.p2 = machine.Pin(pin_2, machine.Pin.OUT)
         self.pwm = machine.PWM(pwm_pin, freq=pwm_freq)
-        self.reverse = reverse_pins
         if stby_pin is not None:
             self.stby = machine.Pin(stby_pin, machine.Pin.OUT)
             self.on()
@@ -55,25 +53,19 @@ class TB6612FNG:
         self.brake()
         
     @micropython.native
-    def set_raw_values(self, pins=None, pwm_duty=None):
+    def set_raw_values(self, pin1=None, pin2=None, pwm_duty=None):
         """
         Directly set the IN1, IN2 pins and PWM duty cycle.
 
         Args:
-            pins (list or None): List of two values [IN1, IN2] (0 or 1),
-                                 or None to leave pins unchanged.
+            pin1 (bool): state of p1 (0 or 1),
+            pin2 (bool): state of p2 (0 or 1),
             pwm_duty (int or None): PWM duty cycle (0-65535), or None to leave unchanged.
         """
-        if pins is None:
-            pins = [None, None]
-        if self.reverse:
-            pins[0], pins[1] = pins[1], pins[0]
-        for i, pin in enumerate(pins):
-            if pin is not None:
-                if i == 0:
-                    self.p1.value(int(pin))
-                else:
-                    self.p2.value(int(pin))
+        if pin1 is not None:
+            self.p1.value(pin1)
+        if pin2 is not None:
+            self.p2.value(pin2)
         if pwm_duty is not None:
             self.pwm.duty_u16(pwm_duty)
             
@@ -82,26 +74,26 @@ class TB6612FNG:
         Actively brake the motor by setting both IN1 and IN2 high and PWM to zero.
         This stops the motor quickly.
         """
-        self.set_raw_values([1, 1], 0)
+        self.set_raw_values(1, 1, 0)
         
     def coast(self):
         """
         Let the motor coast freely (no braking) by setting both IN1 and IN2 low and PWM to zero.
         The motor spins down naturally.
         """
-        self.set_raw_values([0, 0], 0)
+        self.set_raw_values(0, 0, 0)
         
     def set_forward(self):
         """
         Configure pins for forward rotation (IN1=1, IN2=0).
         """
-        self.set_raw_values([1, 0])
+        self.set_raw_values(1, 0)
         
     def set_reverse(self):
         """
         Configure pins for reverse rotation (IN1=0, IN2=1).
         """
-        self.set_raw_values([0, 1])
+        self.set_raw_values(0, 1)
         
     def set_motor(self, direction, speed):
         """
